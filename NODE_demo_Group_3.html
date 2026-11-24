@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NODE Platform Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap">
+<style>
+/* Layout: sticky nav with three views (Home, AI assistant, Pilot plants) switched by hash; indigo field; sections divided by hairlines */
+:root{
+  --ink:#ffffff; --soft:#c9cdea; --mute:#9aa0cc; --line:rgba(255,255,255,.24); --glass:rgba(255,255,255,.06);
+  --navy:#1b2770; --deep:#1a2466; --land:rgba(255,255,255,.10); --land-edge:rgba(255,255,255,.22);
+  --p1:#ffffff; --p2:#8fb8ff; --p3:#c5b6ff; --ok:#8fe3c0; --warn:#ffd08a;
+  --font:"Inter Tight","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--navy);scroll-padding-top:84px}
+html,body{margin:0}
+body{font-family:var(--font);color:var(--ink);font-size:16px;line-height:1.5;background:var(--deep);
+  background-image:radial-gradient(90% 50% at 85% 0%, rgba(120,110,190,.55) 0%, transparent 60%),
+    radial-gradient(80% 40% at 0% 45%, rgba(40,70,170,.5) 0%, transparent 60%),
+    radial-gradient(80% 40% at 100% 80%, rgba(110,95,175,.45) 0%, transparent 60%),
+    linear-gradient(170deg,#1b2770 0%,#2d3b8f 40%,#3d4391 70%,#4f4892 100%);}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1200px;margin:0 auto}
+a{color:inherit}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:rgba(27,39,112,.92)}
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(27,39,112,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+.brand{font-weight:600;letter-spacing:.14em;font-size:1.05rem;text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:10px;height:10px;border-radius:50%;background:var(--p2);box-shadow:16px 0 0 var(--p3)}
+.brand span{margin-left:16px}
+.links{display:flex;gap:26px;font-size:.95rem}
+.links a{text-decoration:none;color:var(--soft)}
+.links a:hover{color:var(--ink)}
+@media (max-width:900px){.links{display:none}}
+.pill{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:10px;padding:12px 24px;border-radius:999px;border:1px solid rgba(255,255,255,.7);color:var(--ink);font-size:.98rem;font-weight:500;transition:background .2s,color .2s}
+.pill:hover{background:rgba(255,255,255,.12)}
+.pill.solid,.pill[aria-selected="true"],.pill[aria-pressed="true"]{background:var(--ink);color:var(--navy);border-color:var(--ink)}
+.pill.solid:hover{background:#e6e8f7}
+.pill.sm{padding:9px 16px;font-size:.88rem}
+.pill:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.chip:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.banner{font-size:.8rem;color:var(--mute);text-align:center;padding:8px 0;border-bottom:1px solid var(--line)}
+section{padding-block:88px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:.9rem;color:var(--soft);letter-spacing:.04em}
+h1{font-weight:400;text-transform:uppercase;font-size:clamp(3rem,10vw,8.4rem);line-height:.94;letter-spacing:-.02em;margin:.2em 0 .3em}
+h2{font-weight:400;text-transform:uppercase;font-size:clamp(2rem,5vw,3.6rem);line-height:1;letter-spacing:-.01em;margin:.2em 0 .5em;text-wrap:balance}
+h3{font-weight:500;font-size:1.25rem;margin:0 0 6px}
+.lead{font-size:clamp(1.05rem,1.6vw,1.3rem);color:var(--soft);max-width:58ch;margin:0}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:64px;border-top:1px solid var(--line)}
+.stat{padding:20px 0 0}
+.stat+.stat{padding-left:20px;border-left:1px solid var(--line)}
+.stat b{display:block;font-weight:300;font-size:clamp(2rem,4.5vw,3.4rem);line-height:1}
+.stat span{display:block;margin-top:8px;color:var(--soft);font-size:.92rem}
+@media (max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(3){padding-left:0;border-left:0}.stat:nth-child(n+3){margin-top:16px}}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:40px}
+@media (max-width:900px){.steps{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.steps{grid-template-columns:1fr}}
+.step{border-top:1px solid var(--ink);padding-top:16px}
+.step .n{font-weight:300;font-size:2.4rem;line-height:1;color:var(--soft)}
+.step h3{margin-top:14px}
+.step p{margin:0;color:var(--soft);font-size:.96rem}
+.trust{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px;align-items:center}
+.trust .lab{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-right:8px}
+.tag{font-size:.86rem;padding:7px 14px;border-radius:999px;border:1px solid var(--line);color:var(--soft)}
+.labs{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:16px;margin-top:40px}
+@media (max-width:980px){.labs{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.labs{grid-template-columns:1fr}}
+.lab-card{border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--glass);display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab-card.flag{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45)}
+.lab-card .kind{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.lab-card p{margin:0;color:var(--soft);font-size:.95rem}
+.lab-card ul{margin:4px 0 0;padding-left:18px;color:var(--soft);font-size:.92rem}
+.lab-card .big{font-weight:300;font-size:2.4rem;line-height:1}
+.net{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:center;margin-top:24px}
+@media (max-width:900px){.net{grid-template-columns:1fr}}
+.netctl{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.mapbox{position:relative}
+svg.map{width:100%;height:auto;display:block}
+.country{fill:var(--land);stroke:var(--land-edge);stroke-width:.6}
+.arc{fill:none;stroke-width:1.3;stroke-linecap:round}
+.pin{cursor:pointer}
+.pin text{font:400 12px var(--font);fill:var(--ink);pointer-events:none}
+.tip{position:absolute;z-index:5;width:min(280px,80vw);padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.97);color:var(--navy);box-shadow:0 18px 40px rgba(10,15,60,.35);pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s}
+.tip.on{opacity:1;transform:none}
+.tip .w{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#5b62a0}
+.tip h4{margin:4px 0 2px;font-weight:500;font-size:1.15rem}
+.tip p{margin:8px 0 0;font-size:.9rem;line-height:1.45;color:#26306e}
+.netside .ph{font-size:.9rem;color:var(--soft)}
+.netside h3{font-weight:400;font-size:clamp(1.5rem,2.6vw,2.2rem);line-height:1.15;margin:6px 0 10px}
+.netside p{color:var(--soft);margin:0}
+/* AI */
+.ai{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:28px;margin-top:36px;align-items:start}
+@media (max-width:980px){.ai{grid-template-columns:1fr}}
+.box{border:1px solid var(--line);border-radius:20px;background:var(--glass);padding:24px;min-width:0}
+label.f{display:block;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+textarea,input[type=text],input[type=email],select{width:100%;font:inherit;font-size:1rem;color:var(--ink);background:rgba(10,16,60,.35);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+textarea{min-height:130px;resize:vertical}
+select option{color:#111}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+.chip{all:unset;cursor:pointer;font-size:.85rem;padding:7px 13px;border-radius:999px;border:1px solid var(--line);color:var(--soft)}
+.chip:hover{border-color:var(--ink);color:var(--ink)}
+.mode{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;color:var(--soft);margin-top:14px}
+.mode i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.mode.live i{background:var(--ok)}
+.out-empty{color:var(--soft);display:flex;flex-direction:column;gap:14px}
+.out-empty .ghost{border:1px dashed var(--line);border-radius:14px;padding:16px;color:var(--mute);font-size:.92rem}
+.thinking{display:flex;align-items:center;gap:12px;color:var(--soft)}
+.dots span{display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:var(--soft);animation:b 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.res{display:flex;flex-direction:column;gap:22px}
+.res .sum{font-size:1.2rem;line-height:1.45;margin:0}
+.res .meta{display:flex;flex-wrap:wrap;gap:8px}
+.res .meta span{font-size:.82rem;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.12)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.sub{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:0 0 10px}
+.hubname{font-size:1.4rem;font-weight:400}
+.res ul{margin:0;padding-left:18px;color:var(--soft)}
+.res li+li{margin-top:6px}
+#patq{all:unset;box-sizing:border-box;width:min(340px,100%);padding:11px 18px;border:1px solid rgba(255,255,255,.55);border-radius:999px;color:var(--ink);font:inherit;font-size:.95rem}
+#patq::placeholder{color:var(--mute)}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px;max-width:820px}
+@media (max-width:600px){.choice{grid-template-columns:1fr}}
+.choice .centre{padding:20px}
+.choice .centre b{font-size:1.2rem}
+.locked{border:1px dashed var(--line);border-radius:14px;padding:16px 18px}
+.locked ul{margin:6px 0 0;padding-left:18px}
+.match{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;padding:14px 0;border-top:1px solid var(--line)}
+.match .pct{font-weight:300;font-size:1.7rem;line-height:1;min-width:3.2ch}
+.match b{font-weight:500}
+.match .m-meta{font-size:.82rem;color:var(--mute)}
+.match p{grid-column:2;margin:4px 0 0;color:var(--soft);font-size:.93rem}
+.note{font-size:.8rem;color:var(--mute)}
+svg.fc{width:100%;height:auto;display:block}
+.fc text{font:400 13px var(--font);fill:var(--soft)}
+/* stories */
+.stories{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+@media (max-width:900px){.stories{grid-template-columns:1fr}}
+.story{border:1px solid var(--line);border-radius:18px;padding:24px;background:var(--glass);display:flex;flex-direction:column;gap:12px}
+.story .k{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.story .num{font-weight:300;font-size:2.6rem;line-height:1}
+.story p{margin:0;color:var(--soft);font-size:.95rem}
+/* apply */
+.apply{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:40px;margin-top:24px}
+@media (max-width:900px){.apply{grid-template-columns:1fr}}
+form .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){form .row{grid-template-columns:1fr}}
+form .fld{margin-bottom:16px}
+.checks{display:flex;flex-wrap:wrap;gap:10px}
+.checks label{display:inline-flex;gap:8px;align-items:center;font-size:.92rem;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+.thanks{border:1px solid rgba(143,227,192,.6);border-radius:14px;padding:16px;color:var(--ink);margin-top:14px}
+footer{padding-block:36px 48px;color:var(--mute);font-size:.85rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between}
+/* home blocks */
+.two-col{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;align-items:start;margin-top:8px}
+@media (max-width:900px){.two-col{grid-template-columns:1fr;gap:28px}}
+ol.how{list-style:none;margin:0;padding:0;counter-reset:h}
+ol.how li{counter-increment:h;display:grid;grid-template-columns:3ch minmax(0,1fr);gap:2px 16px;padding:16px 0;border-top:1px solid var(--line)}
+ol.how li::before{content:"0" counter(h);grid-row:span 2;font-weight:300;font-size:1.4rem;line-height:1.2;color:var(--soft)}
+ol.how b{font-weight:500;font-size:1.1rem}
+ol.how span{color:var(--soft);font-size:.96rem}
+.stat span{max-width:22ch}
+/* views */
+.view{display:none}.view.on{display:block}
+.links a[aria-current="page"]{color:var(--ink);box-shadow:0 2px 0 var(--ink)}
+@media (max-width:900px){.links{display:flex;gap:16px;font-size:.88rem}}
+@media (max-width:560px){.brand span{letter-spacing:.08em}.links{gap:10px;font-size:.78rem;white-space:nowrap;overflow-x:auto;scrollbar-width:none}.links::-webkit-scrollbar{display:none}}
+@media (max-width:560px){nav.top .wrap>.pill{display:none}.brand span{margin-left:12px}}
+.pagehead{padding-block:64px 40px}
+.pagehead h1{font-size:clamp(2.6rem,8vw,6.4rem)}
+/* plan */
+.plan{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+@media (max-width:900px){.plan{grid-template-columns:1fr}}
+.ph-card{border:1px solid var(--line);border-radius:18px;padding:24px;background:var(--glass);display:flex;flex-direction:column;gap:14px}
+.ph-card .k{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.ph-card h3{font-weight:400;font-size:1.6rem;margin:0}
+.ph-card dl{margin:0;display:grid;gap:10px}
+.ph-card dt{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.ph-card dd{margin:2px 0 0;color:var(--soft);font-size:.95rem}
+.ph-card .bar{height:3px;border-radius:2px}
+.band{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+/* AI extras */
+.aifacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+@media (max-width:800px){.aifacts{grid-template-columns:1fr}}
+/* plants */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.filters .lab{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-right:8px;align-self:center;min-width:64px}
+.centres{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:28px}
+@media (max-width:1100px){.centres{grid-template-columns:repeat(4,1fr)}}@media (max-width:600px){.centres{grid-template-columns:repeat(2,1fr)}}
+.centre{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--glass);display:flex;flex-direction:column;gap:4px;min-width:0}
+.centre:hover{border-color:rgba(255,255,255,.6)}
+.centre[aria-pressed="true"]{background:var(--ink);color:var(--navy);border-color:var(--ink)}
+.centre[aria-pressed="true"] span{color:#3d4691}
+.centre b{font-weight:500;font-size:1.1rem}
+.centre span{font-size:.85rem;color:var(--soft)}
+.plants{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+@media (max-width:980px){.plants{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.plants{grid-template-columns:1fr}}
+.plant{border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--glass);display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .3s,background .3s}
+.plant.hl{border-color:var(--ink);background:rgba(255,255,255,.14)}
+.plant.future{border-style:dashed}
+.plant .top{display:flex;justify-content:space-between;gap:10px;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.plant h3{margin:0}
+.plant p{margin:0;color:var(--soft);font-size:.94rem}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:12px;margin-top:auto}
+.specs div{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.specs b{display:block;font-weight:400;font-size:.95rem;letter-spacing:0;text-transform:none;color:var(--ink);margin-top:2px}
+.badge{font-size:.72rem;padding:3px 9px;border-radius:999px;background:rgba(143,227,192,.18);color:var(--ok);letter-spacing:.04em;text-transform:none}
+.badge.soon{background:rgba(197,182,255,.18);color:var(--p3)}
+.empty{color:var(--soft);padding:24px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav class="top gut" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#home"><i aria-hidden="true"></i><span>NODE</span></a>
+    <div class="links"><a href="#home" data-v="home">Home</a><a href="#ai" data-v="ai">AI assistant</a><a href="#plants" data-v="plants">Pilot plants</a><a href="#patents" data-v="patents">Patents</a></div>
+    <a class="pill sm solid" href="#apply">Apply</a>
+  </div>
+</nav>
+
+<!-- ================= HOME ================= -->
+<div class="view" id="v-home">
+<header class="gut" style="padding-block:72px 88px;border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="eyebrow">NEXTCHEM · NODE</div>
+    <h1>From lab<br>to plant</h1>
+    <p class="lead">NODE is NEXTCHEM's network for applied research. Startups, universities and companies test their technologies in our labs and pilot plants, with our engineers at their side, and move faster from an idea to a real plant.</p>
+    <div class="cta"><a class="pill solid" href="#plants">Find a pilot plant</a><a class="pill" href="#ai">Try the AI assistant</a></div>
+    <div class="stats">
+      <div class="stat"><b>6</b><span>research centres in Italy, Switzerland, the Netherlands and Germany</span></div>
+      <div class="stat"><b>6,000 m²</b><span>of campus in Rome, with labs and outdoor test areas</span></div>
+      <div class="stat"><b>15</b><span>bays ready for semi-industrial pilot plants</span></div>
+      <div class="stat"><b>250</b><span>researchers working across the network</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>Four steps to scale</h2>
+    <p class="lead">You keep your recipe and your patents. We ask only for the data on how your process runs.</p>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3>Apply</h3><p>Pick a pilot plant and tell us about your technology. Then two meetings: one on the business, one technical with the team that would use it. We take the time to understand your idea well.</p></div>
+      <div class="step"><div class="n">02</div><h3>Test in our pilots</h3><p>Run your process in a pilot plant with a NEXTCHEM engineer as your mentor. You pay with process data, not with money.</p></div>
+      <div class="step"><div class="n">03</div><h3>Get validated</h3><p>You get a results report signed by NODE, an AI forecast of how your process works at full scale, and the NODE Validated badge to show investors.</p></div>
+      <div class="step"><div class="n">04</div><h3>Grow with MAIRE</h3><p>The best technologies can enter MAIRE's offers to clients, with MAIRE's plant guarantee and a royalty for you on every sale.</p></div>
+    </div>
+    <div class="trust"><span class="lab">Your data is safe</span><span class="tag">Recipes stay locked</span><span class="tag">You see who opens your data</span><span class="tag">Blockchain proof of ownership</span><span class="tag">Unused IP can be bought back</span><span class="tag">Leave any time with a copy of your data</span></div>
+  </div>
+</section>
+
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">Pilot plants</div>
+    <h2>Test it big before you build it</h2>
+    <div class="two-col">
+      <div>
+        <p class="lead">A pilot plant is a small version of an industrial plant. It shows whether a process that works with a few grams in the lab still works with kilos or tonnes, before anyone invests millions in a full plant.</p>
+        <div class="cta"><a class="pill solid" href="#plants">Find a pilot plant</a></div>
+      </div>
+      <ol class="how">
+        <li><b>Choose</b><span>Browse the plants by centre or by sector, or let the AI suggest one.</span></li>
+        <li><b>Book</b><span>Apply online and meet our team on the business and on the technology. MAIRE signs the NDA first.</span></li>
+        <li><b>Run</b><span>Your test runs for weeks or months, with our engineers and lab analyses included.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">NODE AI</div>
+    <h2>An assistant that has seen it before</h2>
+    <div class="two-col">
+      <div>
+        <p class="lead">NODE AI learns from the tests run in our pilot plants. Describe your technology in a few lines and it tells you what usually happens when a process like yours gets bigger.</p>
+        <div class="cta"><a class="pill solid" href="#ai">Try the AI assistant</a></div>
+      </div>
+      <ol class="how">
+        <li><b>Find the right plant</b><span>It suggests the pilot plant and equipment that fit your process.</span></li>
+        <li><b>Learn from others</b><span>It shows similar projects run at NODE and what went wrong there.</span></li>
+        <li><b>See the risks early</b><span>It forecasts how your yield may change from lab to plant and lists your next steps.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">Available patents</div>
+    <h2>Build on a MAIRE patent</h2>
+    <div class="two-col">
+      <div>
+        <p class="lead">Some MAIRE patents are not used today. Instead of keeping them in a drawer, NODE opens them to startups and student teams: license one, build a business on it, and pay a royalty only when you sell.</p>
+        <div class="cta"><a class="pill solid" href="#patents">Browse available patents</a></div>
+      </div>
+      <ol class="how">
+        <li><b>Search</b><span>Browse the list on the NODE platform by sector or keyword.</span></li>
+        <li><b>License</b><span>Ask for a licence. MAIRE keeps ownership, you get the right to use it.</span></li>
+        <li><b>Build</b><span>Test it in NODE's pilot plants and grow a company around it.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">Why MAIRE</div>
+    <h2>A partner that builds plants</h2>
+    <p class="lead">NODE is part of MAIRE, an Italian group that designs and builds industrial plants all over the world. When your technology is ready, this is what stands behind it.</p>
+    <div class="stats">
+      <div class="stat"><b>1,500+</b><span>plants delivered worldwide by MAIRE's companies</span></div>
+      <div class="stat"><b>40</b><span>countries where MAIRE has projects today</span></div>
+      <div class="stat"><b>10,000+</b><span>people working in the group</span></div>
+      <div class="stat"><b>50+</b><span>proprietary technologies in NEXTCHEM's portfolio</span></div>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Clients</h3><p>Meet the companies that buy MAIRE's plants: refineries, fertilizer and chemical producers.</p></div>
+      <div class="step"><h3>A plant guarantee</h3><p>Clients trust a new technology more when MAIRE guarantees how the plant will perform.</p></div>
+      <div class="step"><h3>Engineering</h3><p>MAIRE's engineers help you design the first full-size plant, not only the pilot.</p></div>
+      <div class="step"><h3>Licensing</h3><p>NEXTCHEM already licenses its technologies worldwide and is a world leader in urea technology.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">Stories</div>
+    <h2>Built at NODE</h2>
+    <div class="stories">
+      <div class="story"><div class="k">CO2 to methanol</div><div class="num">3 months</div><p>A spin-off from a Milan university had a catalyst that worked with a few grams. Investors wanted kilograms. At NODE the startup ran its pilot test with a NEXTCHEM engineer, kept its patent and closed its seed round with the NODE report.</p></div>
+      <div class="story"><div class="k">Bio-based plastic</div><div class="num">100×</div><p>A Spanish startup needed to know what happens when it makes its plastic 100 times bigger. The NODE AI forecast answered in days. With the forecast and the NODE Validated badge the round closed, and a packaging company signed a trial order.</p></div>
+      <div class="story"><div class="k">Green hydrogen</div><div class="num">20 years</div><p>A German startup's electrolyser was validated at NODE, but a refinery wanted a 20-year performance guarantee. MAIRE included it in its offer with its own guarantee and won the contract. The founders earn a royalty on every sale.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="gut" style="border-bottom:0">
+  <div class="wrap band">
+    <h2 style="margin:0">Ready to scale?</h2>
+    <div class="cta" style="margin:0"><a class="pill solid" href="#plants">Find a pilot plant</a><a class="pill" href="#ai">Ask the AI first</a></div>
+  </div>
+</section>
+</div>
+
+<!-- ================= AI ================= -->
+<div class="view" id="v-ai">
+<section class="gut" style="border-bottom:0">
+  <div class="wrap">
+    <div class="eyebrow">NODE AI · Scale-up assistant</div>
+    <h2>Ask before you build</h2>
+    <p class="lead">Describe your technology. The assistant finds the right pilot plant, similar projects already run in NODE, the main scale-up risks and your next steps.</p>
+    <div class="ai">
+      <div class="box">
+        <label class="f" for="q">Your technology</label>
+        <textarea id="q" placeholder="Example: a copper catalyst that turns CO2 into methanol. It works at 5 grams per day in our university lab.">A copper catalyst that turns CO2 and green hydrogen into methanol. It works at 5 grams per day in our university lab and we want to reach kilogram scale.</textarea>
+        <div class="chips" aria-label="Examples">
+          <button class="chip" data-ex="Recovering lithium, cobalt and nickel from used electric car batteries with a new leaching process. Tested on 200 g batches.">Battery recycling</button>
+          <button class="chip" data-ex="Turning wood residues into sustainable aviation fuel through gasification and Fischer-Tropsch. Lab rig runs 1 kg of biomass per hour.">SAF from wood</button>
+          <button class="chip" data-ex="A bio-based plastic made from sugar beet waste for food packaging. We can make 2 kg per week.">Bio-based plastic</button>
+          <button class="chip" data-ex="Separating neodymium and praseodymium from recycled magnets with a new solvent. Works in test tubes.">Rare earths</button>
+        </div>
+        <button class="pill solid" id="ask">Analyse my technology</button>
+        <div class="mode" id="mode"><i></i><span>Demo mode · prepared answers</span></div>
+      </div>
+      <div class="box" id="out" aria-live="polite">
+        <div class="out-empty"><div class="sub">What you will get</div>
+          <div class="ghost">The best NODE pilot plant for your test</div>
+          <div class="ghost">Similar projects already run in NODE, with what went wrong</div>
+          <div class="ghost">A forecast of how your yield holds up from lab to plant</div>
+          <div class="ghost">The main scale-up risks and your next steps</div></div>
+      </div>
+    </div>
+    <div class="aifacts">
+      <div class="step"><div class="n">01</div><h3>Learns from every test</h3><p>Each pilot run in NODE adds process data. The more startups test, the better the forecasts get for everyone.</p></div>
+      <div class="step"><div class="n">02</div><h3>Never sees your recipe</h3><p>The model learns from how processes behave, not from secret formulas. Recipes stay locked and every access is logged.</p></div>
+      <div class="step"><div class="n">03</div><h3>Free if you share</h3><p>Startups that share their test data use the assistant free for their first 24 months, then at a reduced price. Others pay a fee and keep their data private.</p></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ================= PLANTS ================= -->
+<div class="view" id="v-plants">
+<section class="gut">
+  <div class="wrap">
+    <div class="eyebrow">Pilot plants</div>
+    <h2>Choose where to test</h2>
+    <p class="lead">Every plant comes with a NEXTCHEM engineer as mentor. Rome is the NODE hub open to startups; special equipment in NEXTCHEM's other centres is available through Rome, and Milan and Sittard will open as spokes. Pick a plant and apply, or ask the AI which one fits you.</p>
+    <div class="centres" id="centres" aria-label="Filter by centre"></div>
+    <div class="filters" id="sectors" aria-label="Filter by sector"><span class="lab">Sector</span></div>
+    <div class="plants" id="plantgrid"></div>
+      </div>
+</section>
+
+
+</div>
+
+<!-- ================= PATENTS ================= -->
+<div class="view" id="v-patents">
+<section class="gut" style="border-bottom:0">
+  <div class="wrap">
+    <div class="eyebrow">Available patents</div>
+    <h2>MAIRE patents, open to new ideas</h2>
+    <p class="lead">These patents are not used by MAIRE today. License one, build a business on it and pay a royalty only on your sales. MAIRE keeps ownership, and you can test your product in NODE's pilot plants.</p>
+    <div class="filters" style="margin-top:24px"><span class="lab">Search</span><input type="search" id="patq" placeholder="e.g. catalyst, urea, plastic" style="max-width:340px"></div>
+    <div class="filters" id="patsec"><span class="lab">Sector</span></div>
+    <div class="plants" id="patgrid"></div>
+  </div>
+</section>
+
+
+</div>
+
+<!-- ================= APPLY ================= -->
+<div class="view" id="v-apply">
+<section class="gut" style="border-bottom:0;padding-bottom:0">
+  <div class="wrap">
+    <div class="eyebrow">Apply to NODE</div>
+    <h2>What would you like to do?</h2>
+    <div class="choice" role="tablist" aria-label="Type of application">
+      <button class="centre" role="tab" data-k="pilot" aria-pressed="true"><b>Book a pilot test</b><span>Test your technology in one of NODE's pilot plants, paying with process data.</span></button>
+      <button class="centre" role="tab" data-k="licence" aria-pressed="false"><b>License a MAIRE patent</b><span>Build a business on a patent MAIRE does not use today, paying a royalty on sales.</span></button>
+    </div>
+  </div>
+</section>
+<section class="gut" id="apply" style="border-bottom:0;padding-top:48px">
+  <div class="wrap">
+    <div class="eyebrow">Pilot test</div>
+    <h2>Book a pilot</h2>
+    <div class="apply">
+      <div><p class="lead">Startups in sustainable fuels, critical materials, fertilizers, recycling and chemistry can test for free and pay with process data.</p>
+        <div class="trust" style="margin-top:24px"><span class="tag">Two meetings to know you</span><span class="tag">MAIRE signs the NDA first</span></div></div>
+      <form id="form" class="box" novalidate>
+        <div class="fld"><label class="f" for="f-plant">Pilot plant</label><select id="f-plant"></select></div>
+        <div class="row">
+          <div class="fld"><label class="f" for="f-name">Team or company</label><input type="text" id="f-name" placeholder="e.g. a university spin-off"></div>
+          <div class="fld"><label class="f" for="f-mail">Email</label><input type="email" id="f-mail" placeholder="name@startup.eu"></div>
+        </div>
+        <div class="row">
+          <div class="fld"><label class="f" for="f-sector">Sector</label><select id="f-sector"><option value="fuels">Sustainable fuels</option><option value="materials">Critical materials</option><option value="fertilizers">Fertilizers</option><option value="circular">Recycling and circular materials</option><option value="chemistry">Chemistry</option></select></div>
+          <div class="fld"><label class="f" for="f-trl">Where you are today</label><select id="f-trl"><option>TRL 3 · lab proof</option><option selected>TRL 4 · lab prototype</option><option>TRL 5 · small pilot</option><option>TRL 6 · large pilot</option></select></div>
+        </div>
+        <div class="fld"><label class="f" for="f-tech">Your technology in two lines</label><textarea id="f-tech" style="min-height:90px"></textarea></div>
+        <div class="fld"><div class="f" style="font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:8px">What you need</div>
+          <div class="checks"><label><input type="checkbox" id="c1" checked> Pilot test</label><label><input type="checkbox" id="c2"> AI forecast</label><label><input type="checkbox" id="c3"> Grant support</label><label><input type="checkbox" id="c4"> Meet MAIRE clients</label></div></div>
+        <button class="pill solid" type="submit">Send application</button>
+        <div id="thanks" hidden class="thanks">Thank you. This is a concept demo, so nothing was sent.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="gut" id="licence" style="border-bottom:0;padding-top:48px" hidden>
+  <div class="wrap">
+    <div class="eyebrow">Patent licence</div>
+    <h2>Ask for a licence</h2>
+    <div class="apply">
+      <div><p class="lead">Tell us which patent you want to use and what you would build with it. MAIRE keeps ownership; you pay a royalty only on your sales.</p>
+        <div class="trust" style="margin-top:24px"><span class="tag">MAIRE keeps ownership</span><span class="tag">Royalty only on sales</span><span class="tag">Pilot tests at NODE on request</span></div></div>
+      <form id="lform" class="box" novalidate>
+        <div class="fld"><label class="f" for="l-pat">Patent</label><select id="l-pat"></select></div>
+        <div class="row">
+          <div class="fld"><label class="f" for="l-name">Team or company</label><input type="text" id="l-name" placeholder="e.g. a student team or a startup"></div>
+          <div class="fld"><label class="f" for="l-mail">Email</label><input type="email" id="l-mail" placeholder="name@startup.eu"></div>
+        </div>
+        <div class="row">
+          <div class="fld"><label class="f" for="l-type">Who you are</label><select id="l-type"><option>Startup</option><option>Student team</option><option>University spin-off</option><option>Company</option></select></div>
+          <div class="fld"><label class="f" for="l-use">Planned use</label><select id="l-use"><option>New product or service</option><option>Improve an existing product</option><option>Research only</option></select></div>
+        </div>
+        <div class="fld"><label class="f" for="l-idea">What you want to build with it</label><textarea id="l-idea" style="min-height:90px"></textarea></div>
+        <div class="fld"><div class="f" style="font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:8px">Also interested in</div>
+          <div class="checks"><label><input type="checkbox" id="l1"> Pilot test at NODE</label><label><input type="checkbox" id="l2"> AI forecast</label><label><input type="checkbox" id="l3"> A NEXTCHEM mentor</label></div></div>
+        <button class="pill solid" type="submit">Send licence request</button>
+        <div id="lthanks" hidden class="thanks">Thank you. This is a concept demo, so nothing was sent.</div>
+      </form>
+    </div>
+  </div>
+</section>
+</div>
+
+<footer class="gut"><div class="wrap"><span>NODE · NEXTCHEM Operating Research Development Excellence</span><span>Concept by Group 3 · LUISS × MAIRE Business Challenge</span></div></footer>
+
+<script>
+
+
+/* ---------- AI assistant ---------- */
+// Demo projects, linked to real NODE centres and technology areas
+const PROJECTS=[
+  {id:"P-014",title:"Copper-zinc catalyst for CO2-to-methanol",hub:"Rome",sector:"fuels",trl:"4 → 6",kw:["co2","methanol","catalyst","copper","hydrogenation","syngas","carbon capture","e-fuel"],outcome:"Yield held at 92% of the lab value at 5 kg per day.",lesson:"The catalyst lost 8% activity after 600 hours: plan regeneration cycles early."},
+  {id:"P-021",title:"Wood residues to syngas for SAF",hub:"Rome",sector:"fuels",trl:"5 → 7",kw:["biomass","wood","gasification","saf","aviation","syngas","fischer","tropsch","residues","forestry"],outcome:"Stable 400-hour run at 50 kg of biomass per hour.",lesson:"Tar doubled at pilot scale; feedstock moisture was the cause."},
+  {id:"P-033",title:"Low-pressure green ammonia",hub:"Sittard",sector:"fertilizers",trl:"4 → 6",kw:["ammonia","nitrogen","fertilizer","fertiliser","haber","urea","green hydrogen"],outcome:"Stable at 60 bar with 15% less energy than the baseline.",lesson:"Hydrogen purity specs drove the catalyst lifetime."},
+  {id:"P-038",title:"Electrolyser stack durability test",hub:"Rome",sector:"fuels",trl:"5 → 6",kw:["electrolyser","electrolyzer","electrolysis","hydrogen","stack","membrane","pem","alkaline"],outcome:"1,500-hour run with 1.2% degradation per 1,000 hours.",lesson:"Water quality mattered more than expected."},
+  {id:"P-045",title:"Recycling mixed polyolefin film",hub:"Brescia",sector:"circular",trl:"6 → 7",kw:["plastic","recycling","recycle","polyolefin","polyethylene","polypropylene","film","packaging","waste"],outcome:"Output reached film grade after adding a hot-washing step.",lesson:"Feedstock from different cities varied more than lab samples."},
+  {id:"P-052",title:"Bio-based polyester from sugars",hub:"Milan",sector:"circular",trl:"4 → 5",kw:["bio-based","biobased","plastic","sugar","polymer","polyester","packaging","beet","starch","biopolymer"],outcome:"First 200 kg batch made and tested by a packaging client.",lesson:"Polymerisation was 30% slower at scale and caused a colour issue."},
+  {id:"P-061",title:"Bio-surfactants from fermentation",hub:"Milan",sector:"chemistry",trl:"5 → 6",kw:["surfactant","detergent","fermentation","cosmetic","cleaning","bio-based"],outcome:"Product matched the performance of a fossil surfactant in tests.",lesson:"Foaming in the fermenter limited the volume."},
+  {id:"P-067",title:"Fluorinated electrolyte salts for batteries",hub:"Basel",sector:"materials",trl:"4 → 6",kw:["fluorine","battery","electrolyte","lithium","salt","fluorinated"],outcome:"99.9% purity reached at pilot scale.",lesson:"Handling hydrogen fluoride drove most of the cost."},
+  {id:"P-073",title:"Lithium recovery from black mass",hub:"Rome",sector:"materials",trl:"4 → 6",kw:["lithium","battery","batteries","recycling","black mass","cobalt","nickel","leaching","hydrometallurgy","electric car","ev"],outcome:"Recovered 91% of lithium and 95% of cobalt.",lesson:"Reagent use was 30% above lab values; particle size changed the leaching speed."},
+  {id:"P-079",title:"Rare earth separation with a new solvent",hub:"Rome",sector:"materials",trl:"3 → 5",kw:["rare earth","neodymium","praseodymium","magnet","solvent","extraction","separation","dysprosium"],outcome:"High purity neodymium oxide produced in a continuous rig.",lesson:"The separation factor halved at pilot scale because of poor mixing."},
+  {id:"P-084",title:"Graphite purification from recycled anodes",hub:"Rome",sector:"materials",trl:"4 → 5",kw:["graphite","anode","battery","purification","carbon"],outcome:"99.5% purity, good enough for new anodes.",lesson:"The thermal step used more energy than planned."},
+  {id:"P-090",title:"Precious metals from spent catalysts",hub:"Rome",sector:"materials",trl:"5 → 7",kw:["platinum","palladium","precious","metal","metals","catalyst","recovery","rhodium"],outcome:"Recovered 97% of the platinum.",lesson:"Spent catalysts from different plants needed different pre-treatment."},
+  {id:"P-096",title:"Plastic waste to methanol",hub:"Rome",sector:"fuels",trl:"5 → 6",kw:["waste","plastic","gasification","methanol","hydrogen","circular","municipal"],outcome:"Syngas quality met the methanol spec for 300 hours.",lesson:"Chlorine in the waste corroded the first reactor."}
+];
+const SECTORS={
+  fuels:{goal:"prove the catalyst keeps its yield over long runs at kilogram scale",label:"Sustainable fuels",hub:"Rome",why:"Rome's pilot bays specialise in catalysis and hydrogen, the core of fuels like methanol and SAF.",later:"For larger fuel tests, Rotterdam or Porvoo once they open.",equip:["Fixed-bed reactor skid with high-pressure gas feed","Online gas analysers for yield and selectivity","Long-run test bench for catalyst lifetime"],risks:["Catalyst activity drops over long runs","Heat removal gets harder in larger reactors","Impurities in real feedstock (sulphur, chlorine)"],next:["Run a 500-hour test at kilogram scale","Map the catalyst lifetime and regeneration","Apply for an EU Innovation Fund grant with NODE"],fc:[[100,100],[86,94],[80,91],[76,89]],trl:[4,6]},
+  materials:{goal:"prove recovery rates hold on real feedstock in 50 kg batches",label:"Critical materials",hub:"Rome",why:"Rome can run leaching, extraction and purification steps, and Basel handles difficult gas-liquid chemistry.",later:"Antwerp, next to precious-metal recycling, once it opens.",equip:["Stirred leaching reactors","Mixer-settlers for solvent extraction","Filtration and drying line"],risks:["Leaching speed changes with particle size","Reagent use grows at scale","Impurities build up in recycled streams"],next:["Test 50 kg batches of real feedstock","Measure reagent use and recycling of solvents","Get the NODE report to talk to battery makers"],fc:[[100,100],[84,93],[79,90],[76,88]],trl:[4,6]},
+  circular:{goal:"prove product quality holds with real, variable feedstock",label:"Recycling and circular materials",hub:"Brescia",why:"Through NODE Rome, startups can use Brescia's plastic upcycling line, an internal NEXTCHEM centre.",later:"Milan's polymer pilot once it opens as a spoke; Rome for gasification.",equip:["Shredding and washing line","Twin-screw extruder","Quality lab for mechanical properties"],risks:["Real feedstock varies more than lab samples","Contamination affects product quality","Matching the properties of virgin material"],next:["Run a 1-tonne trial with real feedstock","Test the output with a packaging client","Prepare the NODE Validated file for investors"],fc:[[100,100],[83,92],[78,90],[75,88]],trl:[4,6]},
+  fertilizers:{goal:"prove stable operation at pilot pressure with green hydrogen",label:"Fertilizers",hub:"Sittard",why:"Sittard specialises in nitrogen and specialty fertilizers, with Stamicarbon next door; its pilots open to startups as a NODE spoke.",later:"The Chemelot hub, in the second wave of NODE's expansion.",equip:["High-pressure synthesis loop","Hydrogen purification unit","Online ammonia analysers"],risks:["Pressure equipment and safety approvals","Hydrogen purity and catalyst lifetime","Energy integration with green hydrogen"],next:["Run a continuous test at pilot pressure","Check integration with a Stamicarbon urea unit","Plan the permitting path early"],fc:[[100,100],[87,95],[82,92],[79,90]],trl:[4,6]},
+  chemistry:{goal:"prove mixing, purity and cost hold at 100-litre scale",label:"Chemistry",hub:"Milan",why:"Milan works on polymers, soaps and detergents and will open as a NODE spoke; Basel's gas-liquid units are available through Rome.",later:"Basel for gas-liquid reactions such as fluorination, through Rome.",equip:["Batch and continuous stirred reactors","Distillation and purification","Analytical lab"],risks:["Mixing and heat transfer at larger volumes","Purification costs","Safety and permitting"],next:["Run a 100-litre batch","Compare cost per kilo with today's product","Meet a MAIRE client in the sector"],fc:[[100,100],[85,94],[80,91],[77,89]],trl:[4,6]}
+};
+const SKW={fuels:["fuel","methanol","saf","aviation","hydrogen","electroly","e-fuel","syngas","gasification","fischer","diesel","biofuel","co2"],
+  materials:["lithium","cobalt","nickel","rare earth","neodymium","graphite","battery","batteries","metal","platinum","palladium","magnet","black mass","leach"],
+  circular:["plastic","recycl","polymer","bio-based","biobased","packaging","waste","polyester","polyolefin","sugar","beet"],
+  fertilizers:["ammonia","urea","fertili","nitrogen","nitrate"],
+  chemistry:["surfactant","detergent","solvent","specialty","cosmetic","fluor","phosgene"]};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clean=s=>String(s).replace(/[—–]/g,"-");
+
+function sectorOf(text){
+  const t=text.toLowerCase();
+  const sc=Object.fromEntries(Object.keys(SKW).map(k=>[k,SKW[k].reduce((a,w)=>a+(t.includes(w)?1:0),0)]));
+  const s=Object.keys(sc).sort((a,b)=>sc[b]-sc[a])[0]; return sc[s]?s:"chemistry";
+}
+function prepared(text){
+  const t=text.toLowerCase(); const sector=sectorOf(text);
+  const S=SECTORS[sector];
+  const ranked=PROJECTS.map(p=>{const hits=p.kw.filter(w=>t.includes(w)).length;return {p,score:hits*2+(p.sector===sector?1.5:0)};})
+    .sort((a,b)=>b.score-a.score).slice(0,3);
+  const top=ranked[0].score||1;
+  let trl=S.trl[0]; if(/test tube|gram|\bg\b|lab/.test(t)) trl=Math.min(trl,4); if(/test tube/.test(t)) trl=3; if(/pilot|tonne|\bkg\b|kilogram/.test(t)&&!/reach kilogram|to kilogram/.test(t)) trl=Math.max(trl,5);
+  return {summary:`This looks like a ${S.label.toLowerCase()} technology at about TRL ${trl}. The next step is a NODE pilot test to ${S.goal}.`,
+    sector:S.label, trl_now:trl, trl_target:Math.min(trl+2,7), hub:S.hub, hub_why:S.why, later:S.later, equipment:S.equip,
+    matches:ranked.map(r=>({id:r.p.id,relevance:Math.max(55,Math.round(60+35*r.score/top)-(r===ranked[0]?0:6)),why:r.p.sector===sector?"Same technology area":"Similar process steps"})),
+    risks:S.risks, next_steps:S.next, forecast:S.fc};
+}
+
+let sample=null, ctl=null;
+(function(){try{ if(window.claude&&window.claude.use){ window.claude.use("sample").then(s=>{ if(s){sample=s;const m=document.getElementById("mode");m.classList.add("live");m.querySelector("span").textContent="Live AI · answers generated for your input";}}).catch(()=>{}); } }catch(e){}})();
+
+function buildPrompt(text){
+  const centres="Rome is the only NODE hub open to startups (6,000 m2 campus, 15 pilot bays: hydrogen, catalysis, sustainable fuels, critical materials). Equipment in NEXTCHEM's internal centres can be used through Rome: Brescia (plastic upcycling), Basel (gas-liquid reactions), Frankfurt (research). Milan (polymers, fuels, soaps) and Sittard (nitrogen and specialty fertilizers) will open as spokes. Future hubs: Antwerp, Rotterdam, Porvoo, then Freiberg, Lyon, Chemelot, Porto Marghera, Stenungsund.";
+  const db=PROJECTS.map(p=>({id:p.id,title:p.title,hub:p.hub,sector:p.sector,trl:p.trl,outcome:p.outcome,lesson:p.lesson}));
+  return `You are the NODE scale-up assistant of NEXTCHEM (MAIRE group). A startup describes its technology. Recommend where to test it in NODE, match it to similar past NODE projects, and list scale-up risks and next steps. Be concrete and short. Plain English, no dashes longer than a hyphen.
+
+NODE centres: ${centres}
+
+Past NODE projects (the only ones you may cite, by id): ${JSON.stringify(db)}
+
+Startup's description: """${text.slice(0,2000)}"""
+
+Reply with only this JSON:
+{"summary":"2 sentences","sector":"short label","trl_now":4,"trl_target":6,"hub":"one of Rome, Milan, Brescia, Basel, Sittard","hub_why":"1 sentence","later":"1 sentence on which other centre or future hub fits later","equipment":["3 items"],"matches":[{"id":"P-014","relevance":85,"why":"short reason"}],"risks":["3 items"],"next_steps":["3 items"],"forecast":[[100,100],[low,high],[low,high],[low,high]]}
+forecast = expected yield as % of the lab value at lab, pilot, demo and plant scale (low and high). Give exactly 2 or 3 matches.`;
+}
+
+function fcSvg(fc){
+  const w=340,h=220,ml=44,mr=24,mt=16,mb=34, xs=["Lab","Pilot","Demo","Plant"];
+  const x=i=>ml+i*(w-ml-mr)/3, y=v=>mt+(100-v)/(100-60)*(h-mt-mb);
+  const band=fc.map((d,i)=>`${x(i)},${y(d[1])}`).join(" ")+" "+fc.slice().reverse().map((d,i)=>`${x(3-i)},${y(d[0])}`).join(" ");
+  const mid=fc.map((d,i)=>`${x(i)},${y((d[0]+d[1])/2)}`).join(" ");
+  let g=""; [60,70,80,90,100].forEach(v=>{g+=`<line x1="${ml}" x2="${w-mr}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,.12)"/><text x="${ml-6}" y="${y(v)+4}" text-anchor="end">${v}%</text>`;});
+  xs.forEach((s,i)=>{g+=`<text x="${x(i)}" y="${h-12}" text-anchor="middle">${s}</text>`;});
+  const last=fc[3], lm=(last[0]+last[1])/2;
+  return `<svg class="fc" viewBox="0 0 ${w} ${h}" role="img" aria-label="Forecast of yield from lab to plant">${g}<polygon points="${band}" fill="rgba(143,184,255,.25)"/><polyline points="${mid}" fill="none" stroke="#fff" stroke-width="1.6"/>${fc.map((d,i)=>`<circle cx="${x(i)}" cy="${y((d[0]+d[1])/2)}" r="3.5" fill="#fff"/>`).join("")}<text x="${x(3)-6}" y="${y(lm)-10}" text-anchor="end" style="fill:#fff">${Math.round(last[0])}-${Math.round(last[1])}%</text></svg>`;
+}
+const PROCS={
+  fuels:["NEXTCHEM low-carbon methanol process","NEXTCHEM green hydrogen and electrolysis packages","Waste-to-chemicals gasification (MAIRE circular technologies)"],
+  materials:["NEXTCHEM hydrometallurgy know-how for spent catalysts","Lithium recovery equipment and know-how from Meab","Gas-liquid reaction units from Basel"],
+  fertilizers:["Stamicarbon urea technology","NEXTCHEM green ammonia process","Stamicarbon specialty fertilizer finishing"],
+  circular:["MyReplast plastic upcycling process","Waste-to-chemicals gasification (MAIRE circular technologies)","NEXTCHEM polymer know-how from Milan"],
+  chemistry:["Ballestra soaps and detergents technologies","Gas-liquid reaction units from Basel","NEXTCHEM polymer know-how from Milan"]
+};
+let lastText="";
+function hubLabel(h){const k=Object.keys(ROLE).find(c=>h.toLowerCase().includes(c.toLowerCase()))||"Rome";const r=ROLE[k];
+  return r==="open"?"NODE Rome":(r==="via"?`NODE Rome · ${k} equipment`:(r==="spoke"?`NODE ${k} spoke · opening soon`:`NODE ${k}`));}
+function procBlock(){
+  const k=sectorOf(lastText||""), list=PROCS[k]||PROCS.chemistry;
+  return `<div class="locked" id="locked"><p class="sub">Existing MAIRE processes you could combine with</p>
+    <div class="lk-off"><p style="margin:0;color:var(--soft)">&#128274; Available only to startups that signed a NODE deal with MAIRE. With a deal, the AI shows which existing MAIRE processes fit your technology.</p>
+    <button class="pill sm" id="unlock" type="button" style="margin-top:12px">Preview as a startup with a deal</button></div>
+    <ul class="lk-on" hidden>${list.map(x=>`<li>${x}</li>`).join("")}</ul>
+    <p class="note lk-on" hidden>Process names are illustrative. A NODE manager confirms the match with the technical team.</p></div>`;
+}
+function render(r,live,note,plant){
+  const ms=(Array.isArray(r.matches)?r.matches:[]).map(m=>({m,p:PROJECTS.find(p=>p.id===String(m.id))})).filter(x=>x.p).slice(0,3);
+  let fc=Array.isArray(r.forecast)&&r.forecast.length===4&&r.forecast.every(d=>Array.isArray(d)&&d.length===2&&d.every(v=>isFinite(v)))?r.forecast.map(d=>[Math.max(60,Math.min(100,+d[0])),Math.max(60,Math.min(100,+d[1]))]):SECTORS.chemistry.fc;
+  const li=a=>(Array.isArray(a)?a:[]).slice(0,4).map(s=>`<li>${esc(clean(s))}</li>`).join("");
+  document.getElementById("out").innerHTML=`<div class="res">
+    <p class="sum">${esc(clean(r.summary||""))}</p>
+    <div class="meta"><span>${esc(clean(r.sector||""))}</span><span>TRL ${esc(r.trl_now)} → ${esc(r.trl_target)}</span><span>${live?"Live AI":"Prepared answer"}</span></div>
+    <div class="two">
+      <div><p class="sub">Where to test</p><div class="hubname">${esc(hubLabel(clean(r.hub||"Rome")))}</div><p style="margin:6px 0 10px;color:var(--soft)">${esc(clean(r.hub_why||""))}</p><ul>${li(r.equipment)}</ul><p class="note" style="margin-top:10px">${esc(clean(r.later||""))}</p></div>
+      <div><p class="sub">Yield forecast, % of lab value</p>${fcSvg(fc)}</div>
+    </div>
+    <div><p class="sub">Similar projects in NODE</p>${ms.map(({m,p})=>`<div class="match"><div class="pct">${Math.round(+m.relevance||70)}%</div><div><b>${esc(p.title)}</b><div class="m-meta">${p.id} · NODE ${p.hub} · TRL ${p.trl} · ${esc(clean(m.why||""))}</div></div><p>${esc(p.outcome)} ${esc(p.lesson)}</p></div>`).join("")}</div>
+    ${procBlock()}
+    <div class="two"><div><p class="sub">Watch out for</p><ul>${li(r.risks)}</ul></div><div><p class="sub">Your next steps</p><ul>${li(r.next_steps)}</ul></div></div>
+    <p class="note">${note?esc(note)+" ":""}Forecasts are a first estimate. Our engineers check them before any test.</p>
+    <div class="cta" style="margin-top:0"><a class="pill sm solid" href="#plants/${plant.id}">See the plant: ${esc(plant.name)}</a><a class="pill sm" href="#apply/pilot/${plant.id}">Apply now</a></div></div>`;
+  const u=document.getElementById("unlock"); if(u) u.onclick=()=>{document.querySelectorAll("#locked .lk-on").forEach(e=>e.hidden=false);document.querySelector("#locked .lk-off").hidden=true;};
+}
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{document.getElementById("q").value=c.dataset.ex;document.getElementById("q").focus();});
+document.getElementById("ask").onclick=async()=>{
+  const text=document.getElementById("q").value.trim(); const out=document.getElementById("out"), btn=document.getElementById("ask");
+  if(!text){document.getElementById("q").focus();return;}
+  lastText=text;
+  btn.disabled=true; out.innerHTML=`<div class="thinking"><span class="dots"><span></span><span></span><span></span></span>Analysing your technology against NODE's projects…</div>`;
+  if(sample){
+    ctl=new AbortController();
+    try{ const r=await sample.json(buildPrompt(text),{signal:ctl.signal}); if(!r||typeof r!=="object"||!r.summary) throw {code:"invalid_json"}; render(r,true,null,pickPlant(text,r.hub)); }
+    catch(e){ const r=prepared(text); render(r,false, e&&e.code==="not_granted"?"Live AI was not allowed, so this is a prepared answer.":"Live AI did not answer, so this is a prepared answer.",pickPlant(text)); if(e&&(e.code==="not_granted"||e.code==="sampling_disabled")){sample=null;const m=document.getElementById("mode");m.classList.remove("live");m.querySelector("span").textContent="Demo mode · prepared answers";} }
+  } else { await new Promise(r=>setTimeout(r,900)); render(prepared(text),false,null,pickPlant(text)); }
+  btn.disabled=false;
+};
+/* ---------- Pilot plants ---------- */
+const CENTRES=[{id:"Rome",d:"NODE hub · open now"},{id:"Milan",d:"Spoke · opening soon"},{id:"Sittard",d:"Spoke · opening soon"},{id:"Brescia",d:"Internal · via Rome"},{id:"Basel",d:"Internal · via Rome"},{id:"Frankfurt",d:"Internal research centre"},{id:"future",n:"New hubs",d:"Coming soon"}];
+// Role of each centre today: Rome is the only hub open to startups; Milan and Sittard become spokes; the others are internal NEXTCHEM centres used through Rome
+const ROLE={Rome:"open",Milan:"spoke",Sittard:"spoke",Brescia:"via",Basel:"via",Frankfurt:"via",future:"future"};
+const BADGE={open:["Available",""],spoke:["Spoke · opening soon"," soon"],via:["Available through Rome",""],future:["New hub · coming soon"," soon"]};
+const BTN={open:"Apply for this plant",spoke:"Join the waiting list",via:"Request through Rome",future:"Join the waiting list"};
+const SECT={fuels:"Sustainable fuels",materials:"Critical materials",fertilizers:"Fertilizers",circular:"Recycling",chemistry:"Chemistry"};
+const PLANTS=[
+  {id:"R1",c:"Rome",s:"fuels",name:"Catalytic hydrogenation skid",d:"Fixed-bed reactors with high-pressure gas feed. For CO2 to methanol, e-fuels and catalyst lifetime tests.",scale:"1-10 kg/day",trl:"4-6",slot:"Feb 2027",kw:["catalyst","methanol","co2","e-fuel","hydrogenation"]},
+  {id:"R2",c:"Rome",s:"fuels",name:"SAF feedstock pre-treatment",d:"Prepares waste oils, residues and biomass so they can become sustainable aviation fuel.",scale:"50 kg/h feed",trl:"5-7",slot:"Apr 2027",kw:["biomass","wood","saf","aviation","fischer","residues","oil"]},
+  {id:"R3",c:"Rome",s:"fuels",name:"Electrolyser test bench",d:"Long runs of electrolyser stacks to measure how fast they wear out. For green hydrogen.",scale:"up to 250 kW",trl:"5-6",slot:"Jan 2027",kw:["electroly","stack","membrane"]},
+  {id:"R4",c:"Rome",s:"fuels",name:"Electrified reforming unit",d:"Makes hydrogen from natural gas with electric heating instead of burning fuel.",scale:"pilot scale",trl:"5-7",slot:"Jun 2027",kw:["reforming","natural gas","syngas"]},
+  {id:"R5",c:"Rome",s:"materials",name:"Hydrometallurgy line",d:"Leaching, solvent extraction and filtration. For battery black mass, rare earths and precious metals.",scale:"50 kg batches",trl:"4-6",slot:"Mar 2027",kw:["lithium","cobalt","nickel","leach","rare earth","neodymium","magnet","platinum","palladium","black mass","battery"]},
+  {id:"R6",c:"Rome",s:"materials",name:"Methane cracking unit",d:"Splits methane into hydrogen and solid carbon, a material that can be sold.",scale:"pilot scale",trl:"4-6",slot:"May 2027",kw:["cracking","carbon black","graphite","solid carbon","methane"]},
+  {id:"R7",c:"Rome",s:"circular",name:"Plastic gasification pilot",d:"Turns plastic that cannot be recycled into gas for new chemicals.",scale:"50 kg/h feed",trl:"5-6",slot:"Apr 2027",kw:["gasification","waste","municipal","non-recyclable"]},
+  {id:"M1",c:"Milan",s:"chemistry",name:"Stirred reactors",d:"Batch and continuous reactors for soaps, detergents and specialty chemicals.",scale:"100 L",trl:"4-6",slot:"Jan 2027",kw:["surfactant","detergent","soap","specialty","cosmetic","solvent","fermentation"]},
+  {id:"M2",c:"Milan",s:"circular",name:"Polymer pilot",d:"Small-scale polymerisation for new and bio-based plastics.",scale:"200 kg batches",trl:"4-5",slot:"Apr 2027",kw:["bio-based","biobased","sugar","beet","polymer","polyester","starch"]},
+  {id:"B1",c:"Brescia",s:"circular",name:"Washing and extrusion line",d:"Mechanical recycling of plastics, from shredding and washing to new pellets.",scale:"1 t/day",trl:"6-7",slot:"Feb 2027",kw:["recycl","polyolefin","film","polyethylene","polypropylene","packaging"]},
+  {id:"B2",c:"Brescia",s:"circular",name:"Upcycling compounding line",d:"Mixes recycled plastics with additives to reach the quality of new material.",scale:"500 kg/day",trl:"6-7",slot:"Mar 2027",kw:["upcycl","compound","recycled plastic"]},
+  {id:"S1",c:"Basel",s:"materials",name:"Gas-liquid fluorination reactor",d:"Fluorine chemistry under containment, for example electrolyte salts for batteries.",scale:"50 L",trl:"4-6",slot:"May 2027",kw:["fluor","electrolyte salt"]},
+  {id:"S2",c:"Basel",s:"chemistry",name:"Gas-liquid reaction unit",d:"Fully contained reactors for difficult gas-liquid chemistry, such as phosgene.",scale:"20 L",trl:"4-6",slot:"Jul 2027",kw:["phosgene","isocyanate","gas-liquid"]},
+  {id:"T1",c:"Sittard",s:"fertilizers",name:"Urea and nitrogen pilot",d:"Tests new urea and nitrogen fertilizer processes, including green ammonia as feed.",scale:"pilot scale",trl:"4-6",slot:"Mar 2027",kw:["ammonia","urea","nitrogen","nitrate","haber"]},
+  {id:"T2",c:"Sittard",s:"fertilizers",name:"Specialty fertilizer line",d:"Coating and granulation for fertilizers that release slowly or carry extra nutrients.",scale:"100 kg/h",trl:"5-7",slot:"May 2027",kw:["fertili","granul","coating","specialty fertilizer"]},
+  {id:"F1",c:"future",city:"Antwerp",s:"materials",name:"Precious metals module",d:"A NODE module inside Europe's largest chemical cluster, next to precious-metal recycling.",scale:"New hub",trl:"5-7",slot:"Waiting list",kw:[]},
+  {id:"F2",c:"future",city:"Rotterdam",s:"fuels",name:"Renewable fuels and SAF module",d:"Larger fuel tests in Europe's biggest port, with TU Delft nearby.",scale:"New hub",trl:"6-7",slot:"Waiting list",kw:[]},
+  {id:"F3",c:"future",city:"Porvoo",s:"fuels",name:"Renewable fuels module",d:"Next to a refinery moving to renewable fuels, with the VTT pilot centre nearby.",scale:"New hub",trl:"6-7",slot:"Waiting list",kw:[]}
+];
+function pickPlant(text,hub){
+  const t=text.toLowerCase(), sec=sectorOf(text);
+  let best=null,bs=-1;
+  PLANTS.filter(p=>p.c!=="future").forEach(p=>{let sc=p.kw.filter(w=>t.includes(w)).length*2+(p.s===sec?1:0)+(hub&&p.c===hub?.5:0)+(ROLE[p.c]==="open"?.6:(ROLE[p.c]==="via"?.3:0));if(sc>bs){bs=sc;best=p;}});
+  return best;
+}
+let fC=null,fS=null;
+const cEl=document.getElementById("centres"),sEl=document.getElementById("sectors"),pEl=document.getElementById("plantgrid");
+CENTRES.forEach(c=>{const b=document.createElement("button");b.className="centre";b.dataset.c=c.id;b.setAttribute("aria-pressed","false");
+  b.innerHTML=`<b>${c.n||c.id}</b><span>${c.d}</span>`;b.onclick=()=>{fC=fC===c.id?null:c.id;drawPlants();};cEl.appendChild(b);});
+[["all","All"],...Object.entries(SECT)].forEach(([k,l])=>{const b=document.createElement("button");b.className="pill sm";b.dataset.s=k;b.textContent=l;
+  b.onclick=()=>{fS=k==="all"?null:k;drawPlants();};sEl.appendChild(b);});
+function drawPlants(hl){
+  cEl.querySelectorAll(".centre").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===fC));
+  sEl.querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.s==="all"&&!fS)||b.dataset.s===fS));
+  const list=PLANTS.filter(p=>(!fC||p.c===fC)&&(!fS||p.s===fS));
+  pEl.innerHTML=list.length?list.map(p=>{const role=ROLE[p.c],fut=role==="future"||role==="spoke",[bt,bc]=BADGE[role];
+    const where=role==="future"?p.city+" · new hub":(role==="open"?"NODE Rome":(role==="spoke"?"NEXTCHEM "+p.c+" · future spoke":"NEXTCHEM "+p.c+" · via Rome"));
+    return `<article class="plant${fut?" future":""}${p.id===hl?" hl":""}" id="pl-${p.id}">
+    <div class="top"><span>${where} · ${SECT[p.s]}</span><span class="badge${bc}">${bt}</span></div>
+    <h3>${p.name}</h3><p>${p.d}</p>
+    <div class="specs"><div>Scale<b>${p.scale}</b></div><div>TRL<b>${p.trl}</b></div><div>${fut?"Status":"Next slot"}<b>${fut?"Waiting list":p.slot}</b></div></div>
+    <div><button class="pill sm${fut?"":" solid"}" data-apply="${p.id}">${BTN[role]}</button></div></article>`;}).join(""):(fC==="Frankfurt"?`<p class="empty">Frankfurt works on research for now. Its pilot plants will be listed here soon.</p>`:`<p class="empty">No plant matches these filters yet. Try another sector or centre.</p>`);
+  pEl.querySelectorAll("[data-apply]").forEach(b=>b.onclick=()=>go("apply/pilot/"+b.dataset.apply));
+}
+const fp=document.getElementById("f-plant");
+fp.innerHTML=`<option value="">Not sure yet, let NODE choose</option>`+["Rome","Brescia","Basel","Milan","Sittard","future"].map(c=>`<optgroup label="${c==="future"?"New hubs · waiting list":(ROLE[c]==="open"?"NODE Rome":(ROLE[c]==="via"?"NEXTCHEM "+c+" · through Rome":"NEXTCHEM "+c+" · spoke, waiting list"))}">${PLANTS.filter(p=>p.c===c).map(p=>`<option value="${p.id}">${p.name}${p.city?" · "+p.city:""}</option>`).join("")}</optgroup>`).join("");
+fp.onchange=()=>{const p=PLANTS.find(x=>x.id===fp.value);if(p)document.getElementById("f-sector").value=p.s;};
+
+/* ---------- Available (dormant) patents ---------- */
+const PATENTS=[
+  {id:"A1",s:"fuels",t:"Heat recovery layout for small-scale methanol units",d:"Recovers more heat in small methanol plants, useful for e-fuels made near renewable power.",trl:"4",why:"Designed for a project that did not go ahead"},
+  {id:"A2",s:"fuels",t:"Catalyst regeneration method for fixed-bed hydrogenation",d:"Extends catalyst life in hydrogenation reactors by regenerating it in place.",trl:"5",why:"Outside MAIRE's current offers"},
+  {id:"A3",s:"fuels",t:"Biomass drying with low-grade heat",d:"Dries wood and agricultural residues using waste heat before gasification.",trl:"5",why:"No current client project"},
+  {id:"A4",s:"materials",t:"Leaching sequence for nickel and cobalt from spent catalysts",d:"Recovers critical metals from used refinery catalysts in fewer steps.",trl:"4",why:"Developed in a research project, never scaled"},
+  {id:"A5",s:"materials",t:"Compact reactor for gas-liquid fluorination",d:"Small, contained reactor for fluorine chemistry, for example battery electrolyte salts.",trl:"4",why:"Market too small for MAIRE's plants"},
+  {id:"A6",s:"fertilizers",t:"Granulation additive for slow-release urea",d:"An additive that makes urea release nitrogen more slowly in the soil.",trl:"6",why:"Outside MAIRE's current product focus"},
+  {id:"A7",s:"circular",t:"Sorting and washing step for multilayer plastic films",d:"Separates multilayer packaging films so they can be recycled.",trl:"5",why:"Better suited to a small specialised company"},
+  {id:"A8",s:"chemistry",t:"Continuous process for bio-based surfactants",d:"Makes surfactants from plant oils in a continuous instead of a batch process.",trl:"4",why:"Not a priority for MAIRE today"}
+];
+let patS=null;
+const patG=document.getElementById("patgrid"), patQ=document.getElementById("patq"), patSec=document.getElementById("patsec");
+[["all","All"],...Object.entries(SECT)].forEach(([k,l])=>{const b=document.createElement("button");b.className="pill sm";b.dataset.s=k;b.textContent=l;b.onclick=()=>{patS=k==="all"?null:k;drawPatents();};patSec.appendChild(b);});
+function drawPatents(){
+  patSec.querySelectorAll(".pill").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.s==="all"&&!patS)||b.dataset.s===patS));
+  const q=(patQ.value||"").toLowerCase().trim();
+  const list=PATENTS.filter(p=>(!patS||p.s===patS)&&(!q||(p.t+" "+p.d).toLowerCase().includes(q)));
+  patG.innerHTML=list.length?list.map(p=>`<article class="plant">
+    <div class="top"><span>MAIRE patent · ${SECT[p.s]}</span><span class="badge">For licence</span></div>
+    <h3>${p.t}</h3><p>${p.d}</p>
+    <div class="specs"><div>TRL<b>${p.trl}</b></div><div>Licence<b>Royalty on sales</b></div><div>Owner<b>MAIRE</b></div></div>
+    <p class="note" style="margin:0">Not used today: ${p.why.charAt(0).toLowerCase()+p.why.slice(1)}.</p>
+    <div><button class="pill sm solid" data-lic="${p.id}">Ask for a licence</button></div></article>`).join("")+`<p class="note" style="grid-column:1/-1">Patent titles are illustrative.</p>`:`<p class="empty">No patent matches your search.</p>`;
+  patG.querySelectorAll("[data-lic]").forEach(b=>b.onclick=()=>go("apply/licence/"+b.dataset.lic));
+}
+patQ.addEventListener("input",drawPatents);
+const lp=document.getElementById("l-pat");
+lp.innerHTML=`<option value="">Not sure yet, suggest one</option>`+Object.entries(SECT).map(([k,l])=>`<optgroup label="${l}">${PATENTS.filter(p=>p.s===k).map(p=>`<option value="${p.id}">${p.t}</option>`).join("")}</optgroup>`).join("");
+document.getElementById("lform").addEventListener("submit",e=>{e.preventDefault();document.getElementById("lthanks").hidden=false;});
+drawPatents();
+
+/* ---------- Apply form ---------- */
+document.getElementById("form").addEventListener("submit",e=>{e.preventDefault();document.getElementById("thanks").hidden=false;});
+
+/* ---------- Router: #home, #ai, #plants, #plants/R1, #plants/apply/R1 ---------- */
+function toTop(){try{window.scrollTo({top:0,behavior:"instant"});}catch(e){window.scrollTo(0,0);}document.documentElement.scrollTop=0;document.body.scrollTop=0;}
+let choice="pilot";
+function setChoice(k){choice=k==="licence"?"licence":"pilot";
+  document.querySelectorAll(".choice .centre").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===choice));
+  document.getElementById("apply").hidden=choice!=="pilot"; document.getElementById("licence").hidden=choice!=="licence";}
+document.querySelectorAll(".choice .centre").forEach(b=>b.onclick=()=>go("apply/"+b.dataset.k));
+function route(h){
+  const parts=(h||"home").split("/");
+  let v=parts[0];
+  if(v==="plants"&&parts[1]==="apply"){v="apply";parts.splice(0,2,"apply","pilot");}
+  if(v==="patents"&&parts[1]==="licence"){v="apply";parts.splice(0,2,"apply","licence");}
+  if(!["home","ai","plants","patents","apply"].includes(v)) v="home";
+  document.querySelectorAll(".view").forEach(el=>el.classList.toggle("on",el.id==="v-"+v));
+  document.querySelectorAll(".links a").forEach(a=>{if(a.dataset.v===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  if(v==="plants"){
+    const id=parts[1], p=PLANTS.find(x=>x.id===id);
+    if(p){fC=null;fS=null;}
+    drawPlants(p?p.id:null);
+    const target=p?document.getElementById("pl-"+p.id):null;
+    requestAnimationFrame(()=>{ if(target) target.scrollIntoView({block:"center"}); else toTop(); });
+  } else if(v==="apply"){
+    const k=parts[1]||choice, id=parts[2];
+    setChoice(k);
+    if(choice==="pilot"){
+      const p=PLANTS.find(x=>x.id===id);
+      if(p){fp.value=p.id;document.getElementById("f-sector").value=p.s;}
+      document.getElementById("thanks").hidden=true;
+      const q=document.getElementById("q").value.trim(),ft=document.getElementById("f-tech");if(!ft.value&&q&&lastText)ft.value=q;
+    } else {
+      const p=PATENTS.find(x=>x.id===id); if(p) lp.value=p.id;
+      document.getElementById("lthanks").hidden=true;
+    }
+    if(id) requestAnimationFrame(()=>document.getElementById(choice==="pilot"?"apply":"licence").scrollIntoView({block:"start"})); else toTop();
+  } else toTop();
+}
+function go(h){
+  h=String(h||"home").replace(/^#/,"");
+  route(h);
+  try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
+}
+document.addEventListener("click",e=>{
+  const a=e.target.closest&&e.target.closest('a[href^="#"]'); if(!a) return;
+  e.preventDefault(); go(a.getAttribute("href"));
+});
+window.addEventListener("hashchange",()=>route(location.hash.replace(/^#/,"")));
+let start="home"; try{start=location.hash.replace(/^#/,"")||"home";}catch(e){}
+route(start);
+</script>
+</body>
+</html>
